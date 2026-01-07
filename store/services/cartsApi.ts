@@ -1,5 +1,8 @@
+ 
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react"
 import type { Product } from "./productsApi"
+import { API_BASE_URL } from "@/constants/api"
+
 
 export interface CartProduct extends Product {
   quantity: number
@@ -13,7 +16,7 @@ export interface Cart {
 
 export const cartsApi = createApi({
   reducerPath: "cartsApi",
-  baseQuery: fetchBaseQuery({ baseUrl: "https://fakestoreapi.com" }),
+  baseQuery: fetchBaseQuery({ baseUrl: API_BASE_URL }),
   tagTypes: ["Cart"],
   endpoints: (builder) => ({
     getCarts: builder.query<Cart[], void>({

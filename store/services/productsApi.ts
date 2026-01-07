@@ -1,3 +1,6 @@
+
+
+import { API_BASE_URL } from "@/constants/api"
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react"
 
 export interface Product {
@@ -15,7 +18,7 @@ export interface Product {
 
 export const productsApi = createApi({
   reducerPath: "productsApi",
-  baseQuery: fetchBaseQuery({ baseUrl: "https://fakestoreapi.com" }),
+  baseQuery: fetchBaseQuery({ baseUrl: API_BASE_URL }),
   tagTypes: ["Product"],
   endpoints: (builder) => ({
     getProducts: builder.query<Product[], void>({

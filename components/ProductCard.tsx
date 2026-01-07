@@ -1,27 +1,13 @@
+
 "use client"
 
 import type React from "react"
-
 import { Card, CardMedia, CardContent, Typography, Box, Button, Rating, Chip } from "@mui/material"
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart"
 import VisibilityIcon from "@mui/icons-material/Visibility"
 import type { Product } from "@/store/services/productsApi"
 import { useAppDispatch } from "@/store/hooks"
 import { addToCart } from "@/store/slices/cartSlice"
-import styled from "@emotion/styled"
-
-const StyledCard = styled(Card)`
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-
-  &:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.5);
-  }
-`
 
 interface ProductCardProps {
   product: Product
@@ -30,27 +16,52 @@ interface ProductCardProps {
 
 export default function ProductCard({ product, onViewDetails }: ProductCardProps) {
   const dispatch = useAppDispatch()
-
   const handleAddToCart = (e: React.MouseEvent) => {
     e.stopPropagation()
     dispatch(addToCart(product))
   }
 
   return (
-    <StyledCard>
-      <Box sx={{ position: "relative", pt: "100%", overflow: "hidden", bgcolor: "white" }}>
+    <Card
+      sx={{
+        height: '460px', 
+        display: 'grid',
+        width: "300px",
+        gridTemplateRows: '220px 1fr',  
+        gridTemplateColumns: '1fr',
+        transition: 'transform 0.3s ease',
+        border: '1px solid',
+        borderColor: 'divider',
+        borderRadius: 2,
+        overflow: 'hidden',
+        '&:hover': {
+          transform: 'translateY(-4px)',
+          boxShadow: 3,
+        }
+      }}
+    >
+ 
+      <Box
+        sx={{
+          position: 'relative',
+          bgcolor: 'white',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+
+          p: 2,
+        }}
+      >
         <CardMedia
           component="img"
           image={product.image}
           alt={product.title}
           sx={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            width: "100%",
-            height: "100%",
-            objectFit: "contain",
-            p: 2,
+            width: 'auto',
+            height: '100%',
+            maxWidth: '100c',
+            maxHeight: '100%',
+            objectFit: 'contain',
           }}
         />
         <Chip
@@ -63,30 +74,40 @@ export default function ProductCard({ product, onViewDetails }: ProductCardProps
             bgcolor: "primary.main",
             color: "white",
             fontWeight: 600,
+            fontSize: '0.75rem',
             textTransform: "capitalize",
           }}
         />
       </Box>
 
-      <CardContent sx={{ flexGrow: 1, display: "flex", flexDirection: "column" }}>
+      <CardContent
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          p: 2,
+          height: '100%',
+          '&:last-child': { pb: 2 }
+        }}
+      >
         <Typography
-          variant="h6"
+          variant="subtitle1"
           component="h2"
-          gutterBottom
           sx={{
             fontWeight: 600,
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            display: "-webkit-box",
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            display: '-webkit-box',
             WebkitLineClamp: 2,
-            WebkitBoxOrient: "vertical",
-            minHeight: "3.6em",
+            WebkitBoxOrient: 'vertical',
+            lineHeight: 1.4,
+            height: '3.6em',
+            mb: 1.5,
           }}
         >
           {product.title}
         </Typography>
 
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5, height: '28px' }}>
           {product.rating && (
             <>
               <Rating value={product.rating.rate} precision={0.1} size="small" readOnly />
@@ -97,25 +118,31 @@ export default function ProductCard({ product, onViewDetails }: ProductCardProps
           )}
         </Box>
 
-        <Typography variant="h5" color="primary" sx={{ fontWeight: 700, mb: 2 }}>
+        <Typography variant="h6" color="primary" sx={{ fontWeight: 700, mb: 2, height: '40px' }}>
           ${product.price.toFixed(2)}
         </Typography>
 
-        <Box sx={{ display: "flex", gap: 1, mt: "auto" }}>
+        <Box sx={{ display: "flex", gap: 1, mt: 'auto', height: '40px' }}>
           <Button
             variant="contained"
             startIcon={<ShoppingCartIcon />}
             onClick={handleAddToCart}
             fullWidth
+            size="small"
             sx={{ fontWeight: 600 }}
           >
             Add to Cart
           </Button>
-          <Button variant="outlined" onClick={onViewDetails} sx={{ minWidth: "auto", px: 2 }}>
+          <Button
+            variant="outlined"
+            onClick={onViewDetails}
+            size="small"
+            sx={{ minWidth: 'auto', px: 2 }}
+          >
             <VisibilityIcon />
           </Button>
         </Box>
       </CardContent>
-    </StyledCard>
+    </Card>
   )
 }

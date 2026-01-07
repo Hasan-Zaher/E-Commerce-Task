@@ -1,7 +1,7 @@
+
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import Link from "next/link"
 import {
@@ -26,12 +26,18 @@ import {
   Toolbar,
   Drawer,
   Button,
+  Paper,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
 } from "@mui/material"
 import SearchIcon from "@mui/icons-material/Search"
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart"
 import FilterListIcon from "@mui/icons-material/FilterList"
 import CloseIcon from "@mui/icons-material/Close"
 import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings"
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore"
+import TuneIcon from "@mui/icons-material/Tune"
 import { useGetProductsQuery, useGetCategoriesQuery } from "@/store/services/productsApi"
 import { useAppSelector, useAppDispatch } from "@/store/hooks"
 import {
@@ -57,23 +63,24 @@ export default function Home() {
 
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false)
+  const [expandedFilters, setExpandedFilters] = useState({
+    category: true,
+    price: true,
+    rating: true,
+  })
 
   const cartItemsCount = cartItems.reduce((sum, item) => sum + item.quantity, 0)
 
   // Filter products
   const filteredProducts = products?.filter((product) => {
-    // Search filter
     const matchesSearch =
       product.title.toLowerCase().includes(filters.searchQuery.toLowerCase()) ||
       product.description.toLowerCase().includes(filters.searchQuery.toLowerCase())
 
-    // Category filter
     const matchesCategory = filters.selectedCategory === "all" || product.category === filters.selectedCategory
 
-    // Price filter
     const matchesPrice = product.price >= filters.priceRange[0] && product.price <= filters.priceRange[1]
 
-    // Rating filter
     const matchesRating = !product.rating || product.rating.rate >= filters.minRating
 
     return matchesSearch && matchesCategory && matchesPrice && matchesRating
@@ -87,6 +94,13 @@ export default function Home() {
     dispatch(setMinRating(newValue || 0))
   }
 
+  const toggleFilterSection = (section: keyof typeof expandedFilters) => {
+    setExpandedFilters(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }))
+  }
+
   const activeFiltersCount = [
     filters.searchQuery !== "",
     filters.selectedCategory !== "all",
@@ -94,15 +108,104 @@ export default function Home() {
     filters.minRating !== 0,
   ].filter(Boolean).length
 
-  const FilterSection = () => (
-    <Box sx={{ p: 3 }}>
+  // FilterSection For Large Screens (Horizontal)
+  const DesktopFilterSection = () => (
+    <Paper
+      elevation={0}
+      sx={{
+        mb: 3,
+        p: 2,
+        bgcolor: "background.paper",
+        borderRadius: 2,
+        border: 1,
+        borderColor: "divider",
+        width: "100%",
+      }}
+    >
+      <Box sx={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        width: '100%',
+        gap: 2,
+      }}>
+        {/* Category   */}
+        <Box sx={{ flex: 1, minWidth: 0 }}>  
+          <FormControl fullWidth size="small">
+            <InputLabel>Category</InputLabel>
+            <Select
+              value={filters.selectedCategory}
+              label="Category"
+              onChange={(e) => dispatch(setSelectedCategory(e.target.value))}
+              sx={{ width: '100%' }}
+            >
+              <MenuItem value="all">All Categories</MenuItem>
+              {categories?.map((category) => (
+                <MenuItem key={category} value={category}>
+                  {category.charAt(0).toUpperCase() + category.slice(1)}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Box>
+
+        {/* Price  */}
+        <Box sx={{ flex: 1.2, minWidth: 0, px: 1 }}>
+          <Typography variant="caption" color="text.secondary" display="block" noWrap>
+            Price: ${filters.priceRange[0]} - ${filters.priceRange[1]}
+          </Typography>
+          <Slider
+            value={filters.priceRange}
+            onChange={handlePriceChange}
+            min={0}
+            max={1000}
+            size="small"
+            sx={{ mt: 1, width: '100%' }}
+          />
+        </Box>
+
+        {/* Rating  */}
+        <Box sx={{ flex: 0.8, minWidth: 0 }}>
+          <Box sx={{ display: 'flex', flexDirection: "column", alignItems: 'start', gap: 1, justifyContent: 'center' }}>
+            <Typography variant="caption" color="text.secondary"  >
+              Rating:
+            </Typography>
+            <Rating
+              value={filters.minRating}
+              onChange={handleRatingChange}
+              size="small"
+            />
+          </Box>
+        </Box>
+
+        {/* Active Filters  */}
+        <Box sx={{ flex: 1, minWidth: 0, display: 'flex', justifyContent: 'flex-end' }}>
+          {activeFiltersCount > 0 && (
+            <Chip
+              label={`${activeFiltersCount} active`}
+              size="small"
+              color="primary"
+              onDelete={() => dispatch(resetFilters())}
+            />
+          )}
+        </Box>
+      </Box>
+    </Paper>
+  )
+
+  // FilterSection for Small Screens (Vertical)
+  const MobileFilterSection = () => (
+    <Box sx={{ p: 2 }}>
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
-        <Typography variant="h6" sx={{ fontWeight: 600 }}>
-          Filters
-        </Typography>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <TuneIcon color="primary" />
+          <Typography variant="h6" sx={{ fontWeight: 600 }}>
+            Filters
+          </Typography>
+        </Box>
         {activeFiltersCount > 0 && (
           <Chip
-            label={`${activeFiltersCount} active`}
+            label={`${activeFiltersCount}`}
             size="small"
             color="primary"
             onDelete={() => dispatch(resetFilters())}
@@ -110,44 +213,105 @@ export default function Home() {
         )}
       </Box>
 
-      <Box sx={{ mb: 4 }}>
-        <FormControl fullWidth>
-          <InputLabel>Category</InputLabel>
-          <Select
-            value={filters.selectedCategory}
-            label="Category"
-            onChange={(e) => dispatch(setSelectedCategory(e.target.value))}
-          >
-            <MenuItem value="all">All Categories</MenuItem>
-            {categories?.map((category) => (
-              <MenuItem key={category} value={category}>
-                {category.charAt(0).toUpperCase() + category.slice(1)}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-      </Box>
+      {/* Category Filter - Accordion */}
+      <Accordion
+        expanded={expandedFilters.category}
+        onChange={() => toggleFilterSection('category')}
+        sx={{
+          mb: 2,
+          bgcolor: 'transparent',
+          boxShadow: 'none',
+          '&:before': { display: 'none' },
+          border: 1,
+          borderColor: 'divider',
+          borderRadius: 1,
+        }}
+      >
+        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+          <Typography sx={{ fontWeight: 600 }}>Category</Typography>
+        </AccordionSummary>
+        <AccordionDetails>
+          <FormControl fullWidth size="small">
+            <Select
+              value={filters.selectedCategory}
+              onChange={(e) => dispatch(setSelectedCategory(e.target.value))}
+              displayEmpty
+              sx={{ borderRadius: 1 }}
+            >
+              <MenuItem value="all">All Categories</MenuItem>
+              {categories?.map((category) => (
+                <MenuItem key={category} value={category}>
+                  {category.charAt(0).toUpperCase() + category.slice(1)}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </AccordionDetails>
+      </Accordion>
 
-      <Box sx={{ mb: 4 }}>
-        <Typography gutterBottom sx={{ fontWeight: 500 }}>
-          Price Range: ${filters.priceRange[0]} - ${filters.priceRange[1]}
-        </Typography>
-        <Slider
-          value={filters.priceRange}
-          onChange={handlePriceChange}
-          valueLabelDisplay="auto"
-          min={0}
-          max={1000}
-          sx={{ mt: 2 }}
-        />
-      </Box>
+      {/* Price Filter - Accordion */}
+      <Accordion
+        expanded={expandedFilters.price}
+        onChange={() => toggleFilterSection('price')}
+        sx={{
+          mb: 2,
+          bgcolor: 'transparent',
+          boxShadow: 'none',
+          '&:before': { display: 'none' },
+          border: 1,
+          borderColor: 'divider',
+          borderRadius: 1,
+        }}
+      >
+        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+          <Typography sx={{ fontWeight: 600 }}>Price Range</Typography>
+        </AccordionSummary>
+        <AccordionDetails>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            ${filters.priceRange[0]} - ${filters.priceRange[1]}
+          </Typography>
+          <Slider
+            value={filters.priceRange}
+            onChange={handlePriceChange}
+            min={0}
+            max={1000}
+            valueLabelDisplay="auto"
+            sx={{ mt: 1 }}
+          />
+        </AccordionDetails>
+      </Accordion>
 
-      <Box sx={{ mb: 3 }}>
-        <Typography gutterBottom sx={{ fontWeight: 500 }}>
-          Minimum Rating
-        </Typography>
-        <Rating value={filters.minRating} onChange={handleRatingChange} size="large" sx={{ mt: 1 }} />
-      </Box>
+      {/* Rating Filter - Accordion */}
+      <Accordion
+        expanded={expandedFilters.rating}
+        onChange={() => toggleFilterSection('rating')}
+        sx={{
+          mb: 2,
+          bgcolor: 'transparent',
+          boxShadow: 'none',
+          '&:before': { display: 'none' },
+          border: 1,
+          borderColor: 'divider',
+          borderRadius: 1,
+        }}
+      >
+        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+          <Typography sx={{ fontWeight: 600 }}>Minimum Rating</Typography>
+        </AccordionSummary>
+        <AccordionDetails>
+          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <Rating
+              value={filters.minRating}
+              onChange={handleRatingChange}
+              size="large"
+              sx={{ mb: 1 }}
+            />
+            <Typography variant="body2" color="text.secondary">
+              {filters.minRating}+ stars
+            </Typography>
+          </Box>
+        </AccordionDetails>
+      </Accordion>
     </Box>
   )
 
@@ -207,21 +371,22 @@ export default function Home() {
         </Box>
 
         <Grid container spacing={3}>
-          <Grid item xs={12} md={3} sx={{ display: { xs: "none", md: "block" } }}>
+          {/* Desktop Filters */}
+          <Grid item xs={12} md={3} sx={{ display: { xs: "none", md: "block", width: "100%" } }}>
             <Box
               sx={{
                 position: "sticky",
                 top: 80,
-                bgcolor: "background.paper",
                 borderRadius: 2,
-                border: 1,
                 borderColor: "divider",
+                width: "50%",
               }}
             >
-              <FilterSection />
+              <DesktopFilterSection />
             </Box>
           </Grid>
 
+          {/* Products Grid */}
           <Grid item xs={12} md={9}>
             {isLoading && (
               <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
@@ -235,9 +400,9 @@ export default function Home() {
               <Alert severity="info">No products found matching your filters.</Alert>
             )}
 
-            <Grid container spacing={3}>
+            <Grid container spacing={3} sx={{  justifyContent: { xs: "center", sm: "flex-start" }  }}>
               {filteredProducts?.map((product) => (
-                <Grid item xs={12} sm={6} lg={4} key={product.id}>
+                <Grid item xs={12} sm={6} lg={4} key={product.id} >
                   <ProductCard product={product} onViewDetails={() => setSelectedProduct(product)} />
                 </Grid>
               ))}
@@ -252,8 +417,16 @@ export default function Home() {
         open={isFilterDrawerOpen}
         onClose={() => setIsFilterDrawerOpen(false)}
         sx={{ display: { md: "none" } }}
+        PaperProps={{
+          sx: {
+            width: '100%',
+            maxWidth: 400,
+            borderTopLeftRadius: 16,
+            borderBottomLeftRadius: 16,
+          }
+        }}
       >
-        <Box sx={{ width: 320 }}>
+        <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
           <Box
             sx={{
               display: "flex",
@@ -269,7 +442,19 @@ export default function Home() {
               <CloseIcon />
             </IconButton>
           </Box>
-          <FilterSection />
+          <Box sx={{ flexGrow: 1, overflowY: "auto" }}>
+            <MobileFilterSection />
+          </Box>
+          <Box sx={{ p: 2, borderTop: 1, borderColor: "divider" }}>
+            <Button
+              variant="contained"
+              fullWidth
+              onClick={() => setIsFilterDrawerOpen(false)}
+              sx={{ fontWeight: 600 }}
+            >
+              Apply Filters
+            </Button>
+          </Box>
         </Box>
       </Drawer>
 
@@ -286,4 +471,4 @@ export default function Home() {
       <CartDrawer open={isCartOpen} onClose={() => dispatch(toggleCart())} />
     </>
   )
-}
+} 
